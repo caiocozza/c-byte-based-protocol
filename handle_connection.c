@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include "service.h"
 #include "handle_connection.h"
 
 char** read_header(char** response, char *str) {
@@ -22,13 +23,14 @@ int handle_connection(const int max_bytes, int* client) {
     gettimeofday(&start, NULL);
 
     int int_length;
+    int int_key;
     int result_message;
     unsigned int read_bytes = 0;
 
     char* header[3];
     char header_buffer[128];
 
-    unsigned char* message;
+    char* received_data;
 
     if (read(*client, header_buffer, sizeof(header_buffer)) < 1) {
         close(*client);
@@ -37,7 +39,14 @@ int handle_connection(const int max_bytes, int* client) {
 
     read_header((char**)&header, header_buffer);
 
-    if (strlen(header[0]) < 1 || strlen(header[1]) < 1 || strlen(header[2]) <= 0) {
+    if (strlen(header[0]) < 1 || strlen(header[1]) <= 0 || strlen(header[2]) <= 0) {
+        close(*client);
+        return -1;
+    }
+
+    //TODO: fast atou instead of atoi
+    int_key = (int)strtol(header[1], NULL, 10);
+    if (int_key < 0) {
         close(*client);
         return -1;
     }
@@ -55,7 +64,7 @@ int handle_connection(const int max_bytes, int* client) {
         return -1;
     }
 
-    message = malloc(int_length+1);
+    received_data = malloc(int_length + 1);
 
     struct timeval tv = {2, 0};
     setsockopt(*client, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv, sizeof(struct timeval));
@@ -65,13 +74,13 @@ int handle_connection(const int max_bytes, int* client) {
         result_message = read(*client, chunk_message, max_bytes);
 
         if (result_message == 0) {
-            message[read_bytes] = '\n';
+            received_data[read_bytes] = '\n';
             break;
         }
 
         if(result_message < 0 || result_message > int_length) {
             close(*client);
-            free(message);
+            free(received_data);
             return -1;
         }
 
@@ -79,24 +88,22 @@ int handle_connection(const int max_bytes, int* client) {
         
         if(read_bytes > int_length) {
             close(*client);
-            free(message);
+            free(received_data);
             return -1;
         }
 
-        memcpy(message+(read_bytes-result_message), chunk_message, result_message);
+        memcpy(received_data + (read_bytes - result_message), chunk_message, result_message);
 
         if (read_bytes == int_length) {
-            message[read_bytes] = '\n';
+            received_data[read_bytes] = '\n';
             break;
         }
     }
 
-    if (write(*client, "A", 1) < 0) {
-        return -1;
-    }
+    execute_service(int_key, client, received_data);
 
     close(*client);
-    free(message);
+    free(received_data);
 
     gettimeofday(&stop, NULL);
     printf("took %lu us\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);

@@ -7,14 +7,13 @@
 #include <pthread.h>
 #include <string.h>
 #include "handle_connection.h"
-#include "socket_pool.h"
 #include "socket_queue.h"
 
 pthread_mutex_t mutex_socket_queue = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  cond_socket_queue = PTHREAD_COND_INITIALIZER;
 
-_Noreturn void* connection_pool_handler(int* thread_id) {
-    printf("Thread #%d created\n", *thread_id);
+_Noreturn void* connection_pool_handler(int* id_thread) {
+    printf("Thread #%d created\n", *id_thread);
 
     while(1) {
         int* client;
@@ -31,10 +30,10 @@ _Noreturn void* connection_pool_handler(int* thread_id) {
         }
     }
 
-    free(thread_id);
+    free(id_thread);
 }
 
-int setup_socket_thread_pool(const unsigned int port, const unsigned int length_pool, const char* ip, service_manager_t* services) {
+int setup_socket_thread_pool(const unsigned int port, const unsigned int length_pool, const char* ip) {
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
 
@@ -61,6 +60,7 @@ int setup_socket_thread_pool(const unsigned int port, const unsigned int length_
     for(int i = 0; i < length_pool; i++) {
         int* thread_p = malloc(sizeof(int));
         *thread_p = i;
+
         if (pthread_create(&threads[i], NULL, (void*)connection_pool_handler, thread_p)) {
             return -1;
         }
