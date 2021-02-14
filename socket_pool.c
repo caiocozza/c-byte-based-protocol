@@ -34,7 +34,7 @@ _Noreturn void* connection_pool_handler(int* thread_id) {
     free(thread_id);
 }
 
-int setup_socket_pool(const unsigned int port, const unsigned int length_pool, const char* ip) {
+int setup_socket_pool(const unsigned int port, const unsigned int length_pool, const char* ip, service_manager_t* services) {
     struct sockaddr_in address;
     bzero(&address, sizeof(address));
 

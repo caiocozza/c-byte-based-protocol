@@ -3,26 +3,23 @@
 #include <pthread.h>
 #include "service_manager.h"
 
-service_manager_t* services;
 unsigned int counter_manager = 1;
 unsigned volatile int pos_current = 0;
 
 pthread_mutex_t mutex_service_queue = PTHREAD_MUTEX_INITIALIZER;
 
-void create_manager(void) {
-    pthread_mutex_lock(&mutex_service_queue);
-
-    services = malloc(sizeof(service_manager_t)*BASE_SERVICE_LENGTH);
+service_manager_t* create_manager(void) {
+    service_manager_t* services = malloc(sizeof(service_manager_t)*BASE_SERVICE_LENGTH);
     memset(services, 0, sizeof(service_manager_t)*BASE_SERVICE_LENGTH);
 
-    pthread_mutex_unlock(&mutex_service_queue);
+    return services;
 }
 
-void clear_manager(void) {
+void clear_manager(service_manager_t* services) {
     free(services);
 }
 
-unsigned int create_service(void* (*fn)(void*)) {
+unsigned int create_service(service_manager_t* services, void* (*fn)(void*)) {
     pthread_mutex_lock(&mutex_service_queue);
     if (services[(BASE_SERVICE_LENGTH*counter_manager)-1].fn != NULL) {
         counter_manager+=1;
@@ -40,13 +37,15 @@ unsigned int create_service(void* (*fn)(void*)) {
     return response - 1;
 }
 
-int execute_service(unsigned int key, void* args) {
+int execute_service(service_manager_t* services, unsigned int key, void* args) {
     if (key > (BASE_SERVICE_LENGTH*counter_manager)) {
         return -1;
     }
 
     if (services[key].fn != NULL) {
+        pthread_mutex_lock(&mutex_service_queue);
         services[key].fn(args);
+        pthread_mutex_unlock(&mutex_service_queue);
         return 1;
     }
 
