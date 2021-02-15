@@ -51,7 +51,7 @@ int setup_socket_thread_pool(const unsigned int port, const unsigned int length_
         return -1;
     }
 
-    if (listen(listenfd, 100000) < 0) {
+    if (listen(listenfd, 100) < 0) {
         return -1;
     }
 
@@ -68,6 +68,7 @@ int setup_socket_thread_pool(const unsigned int port, const unsigned int length_
         pthread_detach(threads[i]);
     }
 
+    listening = 1;
     while (1) {
         struct sockaddr_in client_addr;
         socklen_t client_addrlen = sizeof(client_addr);
