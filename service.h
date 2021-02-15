@@ -15,7 +15,7 @@ static service_t* services;
 void create_manager(void);
 void clear_manager(void);
 int service_exists(unsigned int);
-unsigned int create_service(char* , void* (*fn)(int*,void*));
+int create_service(char* , void* (*fn)(int*,void*));
 int execute_service(unsigned int, int*, char*);
 int send_response(const int*, const char*);
 
