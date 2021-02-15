@@ -1,6 +1,4 @@
-#include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include "socket_pool.h"
 
 void get_user(int* client, char* data) {
@@ -11,7 +9,7 @@ void get_user(int* client, char* data) {
 
 int main() {
     create_manager();
-    create_service("user/find", &get_user);
+    create_service("user/find", (void *(*)(int *, void *)) &get_user);
 
     int ret = setup_socket_thread_pool(8888, 2, "127.0.0.1");
 

@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <sys/socket.h>
 #include "service.h"
+#include "errors.h"
 
 unsigned int counter_manager = 1;
 unsigned volatile int pos_current = 0;
@@ -19,6 +19,14 @@ void clear_manager(void) {
     pthread_mutex_lock(&mutex_service_queue);
     free(services);
     pthread_mutex_unlock(&mutex_service_queue);
+}
+
+int service_exists(const unsigned int key) {
+    if (services[key].fn == NULL || services[key].key != key) {
+        return -1;
+    }
+
+    return 0;
 }
 
 unsigned int create_service(char* service_name, void* (*fn)(int*,void*)) {
@@ -50,15 +58,16 @@ int send_response(const int* client, const char* response) {
 
 int execute_service(unsigned int key, int* client, char* args) {
     if (key > (BASE_SERVICE_LENGTH*counter_manager)) {
-        return -1;
+        return service_not_found;
     }
 
-    if (services[key].fn != NULL) {
-        pthread_mutex_lock(&mutex_service_queue);
-        services[key].fn(client, args);
-        pthread_mutex_unlock(&mutex_service_queue);
-        return 1;
+    if (services[key].fn == NULL) {
+        return service_not_found;
     }
 
-    return -1;
+    pthread_mutex_lock(&mutex_service_queue);
+    services[key].fn(client, args);
+    pthread_mutex_unlock(&mutex_service_queue);
+
+    return 0;
 }
