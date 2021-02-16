@@ -32,9 +32,7 @@ int handle_connection(const int max_bytes, int* client) {
     char* formatted[3];
     char length_buffer[64];
     char* buffer;
-    int length = 0;
-    int response_read = 0;
-    int bytes_read = 0;
+    int length, response_read, bytes_read = 0;
 
     unsigned char has_length = 0;
 
