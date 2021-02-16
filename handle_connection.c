@@ -32,7 +32,7 @@ int handle_connection(const int max_bytes, int* client) {
     char* formatted[3];
     char length_buffer[64];
     char* buffer;
-    int length, response_read, bytes_read = 0;
+    int length, service_key, response_read, bytes_read = 0;
 
     unsigned char has_length = 0;
 
@@ -78,7 +78,7 @@ int handle_connection(const int max_bytes, int* client) {
 
     format_data((char**)&formatted, buffer);
 
-    int service_key = atoi(formatted[1]);
+    service_key = atoi(formatted[1]);
 
     if (service_key < 0) {
         free(buffer);
