@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdio.h>
 #include "service.h"
 #include "errors.h"
 #include "socket_pool.h"
@@ -28,6 +29,23 @@ void clear_manager(void) {
     pthread_mutex_lock(&mutex_service_queue);
     free(services);
     pthread_mutex_unlock(&mutex_service_queue);
+}
+
+int get_services(int*client, char* key) {
+    // We are going to deliver services based on the key provided. If has access to it, for now return all
+    char* str_response = malloc(pos_current*256);
+    for(int i=0;i<pos_current;i++) {
+        strcat(str_response, services[i].service_name);
+        strcat(str_response, "\n");
+    }
+    strcat(str_response, "\r\r");
+    if (write(*client, str_response, strlen(str_response)) < 0) {
+        return -1;
+    }
+
+    free(str_response);
+
+    return 0;
 }
 
 int service_exists(const unsigned int key) {
@@ -62,7 +80,10 @@ int create_service(char* service_name, void* (*fn)(int*,void*)) {
 }
 
 int send_response(const int* client, const char* response) {
-    if (write(*client, response, strlen(response)+1) < 0) {
+    char* response_with_end = malloc(strlen(response)+2);
+    strcpy(response_with_end, response);
+    strcat(response_with_end, "\r\n");
+    if (write(*client, response_with_end, strlen(response_with_end)) < 0) {
         return -1;
     }
 
