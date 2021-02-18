@@ -10,10 +10,7 @@ void get_user(int* client, char* data) {
 int main() {
     create_manager();
     int ret = create_service("user/find", (void *(*)(int *, void *)) &get_user);
-
-    if (ret < 0) {
-        return 1;
-    }
+    ret = create_service("user/create", (void *(*)(int *, void *)) &get_user);
 
     ret = setup_socket_thread_pool(8888, 2, "127.0.0.1");
 

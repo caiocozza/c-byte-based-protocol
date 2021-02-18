@@ -6,6 +6,8 @@
 #include "service.h"
 #include "handle_connection.h"
 
+const char command_template[3] = {'c', 'm', 'x'};
+
 char** format_data(char** response, char *str) {
     unsigned int counter = 0;
     char *temp;
@@ -41,7 +43,26 @@ int handle_connection(const int max_bytes, int* client) {
 
     while(1) {
         if (has_length == 0) {
-            response_read = read(*client, length_buffer, 64);
+            response_read = read(*client, length_buffer, 32);
+
+            // verify commands
+            char* is_command = strstr(length_buffer, "cmd");
+
+            if (is_command != NULL) {
+                char* command[2];
+                format_data(command, length_buffer);
+
+                int command_key = atoi(command[1]);
+
+                if (command_key == 0) {
+                    get_services(client, NULL);
+                } else {
+                    terminate_request_with_error(client, malformed_header);
+                }
+
+                terminate_request(client);
+                return 0;
+            }
 
             if (response_read <= 0) {
                 return terminate_request_with_error(client, reading_header_error);
@@ -71,7 +92,7 @@ int handle_connection(const int max_bytes, int* client) {
             return terminate_request_with_error(client, reading_error_message);
         }
 
-        if (response_read == 0 || bytes_read == (length - 1)) {
+        if (response_read == 0 || bytes_read == length) {
             break;
         }
     }

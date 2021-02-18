@@ -13,6 +13,7 @@ typedef struct service service_t;
 static service_t* services;
 
 void create_manager(void);
+int get_services(int*, char*);
 void clear_manager(void);
 int service_exists(unsigned int);
 int create_service(char* , void* (*fn)(int*,void*));
