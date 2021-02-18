@@ -87,6 +87,7 @@ int send_response(const int* client, const char* response) {
         return -1;
     }
 
+    free(response_with_end);
     return 0;
 }
 
