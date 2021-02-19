@@ -49,13 +49,13 @@ int handle_connection(const int max_bytes, int* client) {
             char* is_command = strstr(length_buffer, "cmd");
 
             if (is_command != NULL) {
-                char* command[2];
+                char* command[3];
                 format_data(command, length_buffer);
 
-                int command_key = atoi(command[1]);
+                int command_key = atoi(command[2]);
 
                 if (command_key == 0) {
-                    get_services(client, NULL);
+                    get_services(client, command[1]);
                 } else {
                     terminate_request_with_error(client, malformed_header);
                 }

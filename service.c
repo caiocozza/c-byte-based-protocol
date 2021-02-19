@@ -2,10 +2,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <stdio.h>
 #include "service.h"
 #include "errors.h"
 #include "socket_pool.h"
+#include "key_manager.h"
 
 unsigned int counter_manager = 1;
 unsigned volatile int pos_current = 0;
@@ -31,12 +31,19 @@ void clear_manager(void) {
     pthread_mutex_unlock(&mutex_service_queue);
 }
 
-int get_services(int*client, char* key) {
-    // We are going to deliver services based on the key provided. If has access to it, for now return all
+int get_services(int* client, char* key) {
+    key_item_t* found_key = find_key(key);
+
+    if (found_key == NULL) {
+        return -1; // TODO: proper handle this error with a specialized message
+    }
+
     char* str_response = malloc(pos_current*256);
     for(int i=0;i<pos_current;i++) {
-        strcat(str_response, services[i].service_name);
-        strcat(str_response, "\n");
+        if (find_service_in_key(services[i].key, found_key) == 0) {
+            strcat(str_response, services[i].service_name);
+            strcat(str_response, "\n");
+        }
     }
     strcat(str_response, "\r\r");
     if (write(*client, str_response, strlen(str_response)) < 0) {
