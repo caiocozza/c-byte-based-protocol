@@ -1,12 +1,16 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "key_manager.h"
 
 key_item_t* key_head = NULL;
 key_item_t* key_tail = NULL;
 
-const char* create_key_bucket() {
-    return create_key();
+void create_key_bucket(const char* key) {
+    if (strlen(key) != 37) {
+        fprintf(stderr, "Key must be UUID\n");
+    }
+    mount_key(key);
 }
 
 int find_service_in_key(unsigned int pos_service, const key_item_t* key) {
@@ -59,12 +63,7 @@ key_item_t* find_key(const char* key) {
     return NULL;
 }
 
-const char* create_key() {
-    uuid_t raw_uuid;
-    uuid_generate_random(raw_uuid);
-    char *key = malloc(UUID_STR_LEN);
-    uuid_unparse_lower(raw_uuid, key);
-
+void mount_key(const char* key) {
     key_item_t* new_key = malloc(sizeof(key_item_t));
     strcpy(new_key->key, key);
     new_key->service_head = NULL;
@@ -78,7 +77,4 @@ const char* create_key() {
     }
 
     key_tail = new_key;
-
-    free(key);
-    return new_key->key;
 }
